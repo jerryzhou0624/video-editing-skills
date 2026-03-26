@@ -242,6 +242,7 @@ python "<SKILL_DIR>\scripts\analyze_video.py" --video-dir "<VIDEO_DIR>" --output
 2. **画面质量** — 稳定、光线好、对焦准确
 3. **内容多样性** — 避免相似画面连续
 4. **节奏需要** — 动感段落用短片段，安静段落用长片段
+5. **独特性** — 内容不与其他已选片段重复
 
 #### 节奏密度（根据 pacing 调整）
 
@@ -269,14 +270,10 @@ python "<SKILL_DIR>\scripts\analyze_video.py" --video-dir "<VIDEO_DIR>" --output
 
 **核心原则：补充情感，不要描述画面。**
 
-| 规则 | 说明 |
-|------|------|
-| 密度 | 50-60% 的片段加字幕，40-50% 留白让画面呼吸 |
-| 长度 | 每 3s 片段最多 10-15 个中文字 |
-| 空字幕 | 不加字幕的片段设 `"text": ""`（空字符串） |
-| 开场 | 第一个片段建议加字幕（设置基调） |
-| 高潮 | 高潮片段可不加字幕（让画面说话） |
-| 结尾 | 最后一个片段建议加字幕（留下回味） |
+- 每 3 秒片段最多 10-15 个字，不能为空字幕
+- 字幕应表达画面无法传达的情绪和内心独白
+- 匹配 vlog 氛围（积极向上、深思感悟等）
+
 
 **示例对比：**
 
@@ -370,7 +367,7 @@ python "<SKILL_DIR>\scripts\analyze_video.py" --video-dir "<VIDEO_DIR>" --output
 - `in_point`：该 seg_id 的 `seg_start` 值
 - `out_point`：该 seg_id 的 `seg_end` 值
 - `duration`：必须等于 `out_point - in_point`，且 > 0
-- `voiceover.text`：字幕文本，不加字幕时设为空字符串 `""`
+- `voiceover.text`：字幕文本，不能为空字幕
 - `file_path`：BGM 的**绝对路径**
 
 #### 写入前必须验证
