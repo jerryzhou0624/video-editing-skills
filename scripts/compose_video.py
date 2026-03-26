@@ -157,11 +157,17 @@ def load_storyboard(
         voiceover = clip.get("voiceover") or {}
         subtitle = str(voiceover.get("text", "")).strip()
 
+        source_path = Path(clip["source_video"])
+        if not source_path.exists():
+            raise FileNotFoundError(
+                f"clip {idx} 的 source_video 文件不存在：{source_path}"
+            )
+
         specs.append(
             ClipSpec(
                 clip_id=int(clip.get("clip_id", idx)),
                 sequence_order=int(clip.get("sequence_order", idx)),
-                source_video=Path(clip["source_video"]),
+                source_video=source_path,
                 in_point=in_point,
                 out_point=out_point,
                 duration=duration,
@@ -311,7 +317,7 @@ def extract_clip(
     print(f"[extract_clip] 输入侧 seek 失败或输出无效，切换到输出侧 seek 模式重试...")
     print(" ".join(cmd_output_seek))
     result2 = subprocess.run(cmd_output_seek, capture_output=True, text=True)
-    if result2.returncode != 0:
+    if result2.returncode != 0 or not _is_valid_clip(ffmpeg, output_path):
         raise RuntimeError(
             "Command failed (both seek modes):\n"
             + " ".join(cmd_output_seek)

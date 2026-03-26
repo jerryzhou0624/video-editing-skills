@@ -130,39 +130,41 @@ def extract_segment_frames(
     if not cap.isOpened():
         return []
 
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if fps <= 0:
+    try:
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps <= 0:
+            return []
+
+        seg_duration = seg_end - seg_start
+        if seg_duration <= 0:
+            return []
+
+        if num_frames <= 1:
+            positions = [seg_start + seg_duration / 2]
+        else:
+            positions = [
+                seg_start + i * seg_duration / (num_frames - 1)
+                for i in range(num_frames)
+            ]
+
+        frames = []
+        for pos in positions:
+            frame_idx = int(pos * fps)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            ret, frame = cap.read()
+            if not ret:
+                continue
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_frame = Image.fromarray(frame_rgb)
+            if scale != 1.0 and scale > 0:
+                new_w = max(1, int(pil_frame.width * scale))
+                new_h = max(1, int(pil_frame.height * scale))
+                pil_frame = pil_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            frames.append(pil_frame)
+
+        return frames
+    finally:
         cap.release()
-        return []
-
-    seg_duration = seg_end - seg_start
-    if num_frames <= 1:
-        positions = [seg_start + seg_duration / 2]
-    else:
-        positions = [
-            seg_start + i * seg_duration / (num_frames - 1)
-            for i in range(num_frames)
-        ]
-
-    frames = []
-    for pos in positions:
-        frame_idx = int(pos * fps)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
-        if not ret:
-            continue
-        # BGR → RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_frame = Image.fromarray(frame_rgb)
-        # 缩放
-        if scale != 1.0 and scale > 0:
-            new_w = max(1, int(pil_frame.width * scale))
-            new_h = max(1, int(pil_frame.height * scale))
-            pil_frame = pil_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        frames.append(pil_frame)
-
-    cap.release()
-    return frames
 
 
 # ---------------------------------------------------------------------------
@@ -298,6 +300,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
+    # 参数校验
+    if args.seg_duration <= 0:
+        print("错误：--seg-duration 必须为正数", file=sys.stderr)
+        return 1
+    if args.frames_per_seg < 1:
+        print("错误：--frames-per-seg 必须 >= 1", file=sys.stderr)
+        return 1
+    if args.scale <= 0:
+        print("错误：--scale 必须为正数", file=sys.stderr)
+        return 1
+
     # 解析路径
     video_dir = Path(args.video_dir).resolve()
     output_path = Path(args.output).resolve()
@@ -344,9 +357,13 @@ def main() -> int:
 
     # 写入输出
     output_data = {"processed_videos": results}
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as f:
-        json.dump(output_data, f, ensure_ascii=False, indent=2)
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with output_path.open("w", encoding="utf-8") as f:
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        print(f"错误：无法写入输出文件 {output_path}：{e}", file=sys.stderr)
+        return 1
 
     total_time = time.time() - total_start
     total_segments = sum(len(r["segments"]) for r in results)
