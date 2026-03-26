@@ -321,7 +321,6 @@ python "<SKILL_DIR>\scripts\analyze_video.py" --video-dir "<VIDEO_DIR>" --output
   "storyboard_metadata": {
     "theme": "摩旅自由行",
     "target_duration_seconds": 30,
-    "cloud_llm_name": "ClaudeOpus"
   },
   "clips": [
     {
@@ -375,7 +374,7 @@ python "<SKILL_DIR>\scripts\analyze_video.py" --video-dir "<VIDEO_DIR>" --output
 
 #### 写入前必须验证
 
-1. ☐ `theme`、`target_duration_seconds`、`cloud_llm_name` 三个必需字段存在
+1. ☐ `theme`、`target_duration_seconds` 两个必需字段存在
 2. ☐ 每个 clip：`out_point > in_point` 且 `duration == out_point - in_point` 且 `duration > 0`
 3. ☐ 每个 `source_video` 路径指向 `<VIDEO_DIR>` 中实际存在的文件
 4. ☐ 每个 `source_segment_id` 在 output_vlm.json 对应视频的 seg_id 范围内
@@ -424,8 +423,8 @@ python "<SKILL_DIR>\scripts\compose_video.py" --storyboard "<WORKSPACE_DIR>\stor
 | `--bgm-volume` | `0.3` | BGM 音量（0.0-1.0） |
 | `--dry-run` | — | 仅打印命令不执行（调试用） |
 
-**输出文件：** `<WORKSPACE_DIR>\<theme>_<duration>s_bgm_<cloud_llm_name>.mp4`
-例如：`摩旅自由行_30s_bgm_ClaudeOpus.mp4`
+**输出文件：** `<WORKSPACE_DIR>\<theme>_<duration>s_bgm.mp4`
+例如：`摩旅自由行_30s_bgm.mp4`
 
 **合成失败时**：先加 `--dry-run` 检查生成的 ffmpeg 命令，确认路径和参数正确。
 
@@ -482,7 +481,6 @@ python "<SKILL_DIR>\scripts\compose_video.py" --storyboard "<WORKSPACE_DIR>\stor
 | 路径使用正斜杠 | 始终使用 `\\` 反斜杠 |
 | BGM 用相对路径 | 始终拼接绝对路径 |
 | 重复使用同一 segment | 写入前去重检查 |
-| `cloud_llm_name` 缺失 | 始终填写（如 "ClaudeOpus"、"GPT4o"） |
 | 字幕文本过长 | 每 3s 控制在 10-15 个中文字 |
 | seg_id 超出范围 | 核对 output_vlm.json 中的实际 seg_id |
 | duration ≠ out_point - in_point | 三者必须一致 |
